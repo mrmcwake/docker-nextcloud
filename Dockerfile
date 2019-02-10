@@ -20,15 +20,19 @@ RUN \
 	gcc \
 	make \
 	php7-dev \
+        php7-pear \
 	re2c \
 	samba-dev \
-	zlib-dev && \
+	zlib-dev \
+	musl-dev && \
  echo "**** install runtime packages ****" && \
  apk add --no-cache \
 	curl \
 	ffmpeg \
 	imagemagick \
 	libxml2 \
+        musl \
+	inotify-tools \
 	php7-apcu \
 	php7-bz2 \
 	php7-ctype \
@@ -61,6 +65,7 @@ RUN \
 	sudo \
 	tar \
 	unzip && \
+pecl install inotify && \
  echo "**** compile smbclient ****" && \
  git clone git://github.com/eduardok/libsmbclient-php.git /tmp/smbclient && \
  cd /tmp/smbclient && \
@@ -71,6 +76,7 @@ RUN \
  make install && \
  echo "**** configure php and nginx for nextcloud ****" && \
  echo "extension="smbclient.so"" > /etc/php7/conf.d/00_smbclient.ini && \
+ echo "extension="inotify.so"" > /etc/php7/conf.d/00_inotify.ini && \
  sed -i \
 	-e 's/;opcache.enable.*=.*/opcache.enable=1/g' \
 	-e 's/;opcache.interned_strings_buffer.*=.*/opcache.interned_strings_buffer=8/g' \
