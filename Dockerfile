@@ -1,4 +1,4 @@
-FROM lsiobase/alpine.nginx:3.8
+FROM lsiobase/nginx:3.9
 
 # set version label
 ARG BUILD_DATE
@@ -12,7 +12,7 @@ ENV NEXTCLOUD_PATH="/config/www/nextcloud"
 
 RUN \
  echo "**** install build packages ****" && \
- apk add --no-cache --virtual=build-dependencies \
+ apk add --no-cache --virtual=build-dependencies --upgrade \
 	autoconf \
 	automake \
 	file \
@@ -26,7 +26,7 @@ RUN \
 	zlib-dev \
 	musl-dev && \
  echo "**** install runtime packages ****" && \
- apk add --no-cache \
+ apk add --no-cache --upgrade \
 	curl \
 	ffmpeg \
 	imagemagick \
@@ -58,10 +58,11 @@ RUN \
 	php7-phar \
 	php7-posix \
 	php7-redis \
+	php7-sodium \
 	php7-sqlite3 \
 	php7-xmlreader \
 	php7-zip \
-	samba \
+	samba-client \
 	sudo \
 	tar \
 	unzip && \
@@ -77,6 +78,7 @@ pecl install inotify && \
  echo "**** configure php and nginx for nextcloud ****" && \
  echo "extension="smbclient.so"" > /etc/php7/conf.d/00_smbclient.ini && \
  echo "extension="inotify.so"" > /etc/php7/conf.d/00_inotify.ini && \
+ echo 'apc.enable_cli=1' >> /etc/php7/conf.d/apcu.ini && \
  sed -i \
 	-e 's/;opcache.enable.*=.*/opcache.enable=1/g' \
 	-e 's/;opcache.interned_strings_buffer.*=.*/opcache.interned_strings_buffer=8/g' \
@@ -93,8 +95,8 @@ pecl install inotify && \
  echo "env[PATH] = /usr/local/bin:/usr/bin:/bin" >> /etc/php7/php-fpm.conf && \
  echo "**** set version tag ****" && \
  if [ -z ${NEXTCLOUD_RELEASE+x} ]; then \
- 	NEXTCLOUD_RELEASE=$(curl -s https://download.nextcloud.com/server/installer/setup-nextcloud.php \
-	| awk -F \' '/NC_VERSION/{print $4;exit}'); \
+	NEXTCLOUD_RELEASE=$(curl -s https://raw.githubusercontent.com/nextcloud/nextcloud.com/master/strings.php \
+	| awk -F\' '/VERSIONS_SERVER_FULL_STABLE/ {print $2;exit}'); \
  fi && \
  echo ${NEXTCLOUD_RELEASE} > /version.txt && \
  echo "**** cleanup ****" && \
